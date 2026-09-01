@@ -173,6 +173,6 @@ that paragraph.
 
 ---
 
-Article: *(added after publish)*
+Article: [**Six iOS Surfaces Passed Their Contrast Check. Model Liquid Glass, and Three to Five Fail.**](https://medium.com/@er.rajatlakhina/six-ios-surfaces-passed-their-contrast-check-model-liquid-glass-and-three-to-five-fail-56079ee70427)
 
 MIT licensed.
