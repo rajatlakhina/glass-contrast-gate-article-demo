@@ -138,9 +138,11 @@ cost/confidence dial, never a correctness risk.
   of the running app in this repo** — the diagrams in the article are drawn from `swift test`
   output, not from a device capture.
 - **`ContrastGateDemoView.swift` has never been type-checked.** It sits behind
-  `#if canImport(SwiftUI)`, and the Linux toolchain used above has no SwiftUI, so `swift build`
-  compiled none of it. It parses cleanly (`swiftc -parse`) and that is the entire claim. The audit
-  maths underneath it is fully covered; the view is not.
+  `#if canImport(SwiftUI) && os(iOS)`, and the Linux toolchain used above has no SwiftUI, so
+  `swift build` compiled none of it. It parses cleanly (`swiftc -parse`) and that is the entire
+  claim. The audit maths underneath it is fully covered; the view is not. The `os(iOS)` half of that
+  guard is deliberate: the view uses iOS-only modifiers such as `navigationBarTitleDisplayMode`, so
+  without it a macOS `swift test` would try to compile a file it has no reason to build, and fail.
 - `Demo.xcodeproj/project.pbxproj` was hand-authored and machine-checked instead: braces and parens
   balanced (32/32, 24/24), all 22 object ids referenced are defined, zero dangling references, the
   asset catalog JSON parses, and `Demo.xcscheme` is well-formed XML. That is a structural check, not
@@ -164,8 +166,10 @@ open Demo.xcodeproj        # pick any iOS Simulator, Build & Run
 No second repo, no package resolution over the network — `Demo.xcodeproj` consumes the library
 through an `XCLocalSwiftPackageReference` pointing at this same directory.
 
-The demo app puts a translucent bar over a backdrop you can drag from black to white, flips between
-the two blend spaces, and shows the audit's verdict for all six surfaces updating live.
+The demo app is written to put a translucent bar over a backdrop you can drag from black to white,
+flip between the two blend spaces, and show the audit's verdict for all six surfaces updating live —
+*written to*, because it has never been launched. See "Verification status" above before you trust
+that paragraph.
 
 ---
 
