@@ -1,13 +1,13 @@
 # Screenshots
 
-Empty on purpose, and worth two lines of explanation.
+No screenshots of the running app are published here, and that is deliberate rather than an oversight.
 
-The Simulator run did not happen in the cycle that produced this repo — the session that
-built it could not obtain macOS computer-use grants, so Xcode was never opened. See the
-"Verification status" section of the top-level README.
+The Simulator run did not happen in the cycle that produced this repo — the session that built it
+could not obtain macOS computer-use grants, so Xcode was never opened. See the "Verification status"
+section of the top-level README for exactly what was and was not checked.
 
-Rather than ship a placeholder, a stock image, or a diagram dressed up as a device
-capture, this folder is empty until a real run produces real screenshots.
+Rather than ship a placeholder, a stock image, or one of the article's diagrams relabelled as a
+device capture, this folder carries no images at all until a real run produces real ones.
 
-Everything the library claims is instead pinned by `swift test` (26 tests), which anyone
-can run without Xcode.
+Everything the library actually claims is pinned by `swift test` (26 tests), which you can run
+without Xcode.
