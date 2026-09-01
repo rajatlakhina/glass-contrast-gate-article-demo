@@ -1,4 +1,9 @@
-#if canImport(SwiftUI)
+// The demo view is iOS-only on purpose. `canImport(SwiftUI)` alone is true on
+// macOS too, and this view uses iOS-only modifiers such as
+// `navigationBarTitleDisplayMode`, so a macOS `swift test` would fail to
+// compile a file it has no reason to build. The audit maths below it is
+// platform-agnostic and always compiles.
+#if canImport(SwiftUI) && os(iOS)
 import Foundation
 import SwiftUI
 
