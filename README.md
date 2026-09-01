@@ -3,8 +3,11 @@
 **A contrast gate for chrome your app no longer fully owns.**
 
 Under iOS 26 the `UIDesignRequiresCompatibility` Info.plist flag bought teams a year of the
-pre-Liquid-Glass look. Apple was explicit in developer workshops that it was temporary. Under the
-iOS 27 SDK the flag is ignored: recompile and the design applies.
+pre-Liquid-Glass look. Under the iOS 27 SDK it is reportedly ignored: recompile and the design
+applies. That report is second-hand — [AppleInsider](https://appleinsider.com/articles/26/03/26/stop-holding-out-hope-liquid-glass-will-be-mandatory-in-ios-27)
+relaying an account of an Apple developer workshop — and Apple has published nothing on it, so
+treat the timing as likely rather than settled. The engineering problem below does not depend on
+the date.
 
 The part that gets filed as a design project is not a design project. When standard chrome becomes
 translucent, the app stops owning its own background — the system composites the app's material
@@ -37,10 +40,14 @@ swept across 21 backdrop levels behind the same material:
 and `Toolbar/DestructiveAction` flip verdict on the blend space alone — same colour, same material,
 same requirement, opposite answers.
 
-That is why `BlendSpace` is a required parameter and not an internal default. Which space your
-platform actually composites in is a thing to measure on a device, not to assume in a design
-review, and a tool that quietly picks one for you has hidden the most consequential variable in the
-calculation.
+That is why `BlendSpace` is a required parameter with no default. A library cannot know which of
+the two your platform uses, and guessing on your behalf would bury the one input that changes the
+verdict. Measure it on a device, then pass it in.
+
+Note also what the material here is: a **flat alpha tint**, not a simulation of Liquid Glass. Real
+system materials blur, adapt their tint to content, and apply vibrancy. This models only the part
+that changed structurally — that some fraction of the background is now content the app does not
+control.
 
 ---
 
@@ -65,7 +72,7 @@ let report = audit.evaluate([
 for verdict in report.silentRegressions {
     print(verdict.surfaceID,
           verdict.nominalRatio,          // 6.56 — what the old check said
-          verdict.worstCaseRatio,        // 3.14 — what is actually there
+          verdict.worstCaseRatio,        // 3.14 — what the model says is there
           verdict.worstCaseBackdrop)     // #000000 — go reproduce it
 }
 ```
@@ -103,10 +110,16 @@ all, and `testOpaqueSurfaceHasNoEnvelopeExposure` pins that: worst case equals n
 ### Why a sweep and not two endpoints
 
 `testWorstCaseCanBeInteriorToTheSweep` pins a case a lightest-and-darkest check walks straight past.
-For a mid-luminance foreground (`#8E8E93`) on the 50%-opacity material, contrast bottoms out at
-**1.03:1** at backdrop `#262626` — while the black endpoint reads 1.33:1 and the white endpoint
-3.09:1. The minimum sits where the composited background crosses the foreground's own luminance,
-which is generally not at either end.
+For a mid-luminance foreground (`#8E8E93`) on the 50%-opacity material, **under gamma-encoded
+blending**, contrast bottoms out at **1.03:1** at backdrop `#262626` — while the black endpoint
+reads 1.33:1 and the white endpoint 3.09:1. The minimum sits where the composited background
+crosses the foreground's own luminance.
+
+Two honest limits on that finding. Under linear-light blending the same surface bottoms out at the
+black endpoint, so a two-point check would catch it. And in the six-surface inventory above every
+worst case lands at the dark end in both spaces. The interior minimum is a real trap, not a common
+one — which is the argument for sweeping rather than for trusting a rule of thumb about where to
+look.
 
 `testDenserSweepNeverImprovesTheWorstCase` pins the companion property: resolution is a
 cost/confidence dial, never a correctness risk.
@@ -124,14 +137,18 @@ cost/confidence dial, never a correctness risk.
   opened and `Demo.xcodeproj` was never launched on a device. There are therefore **no screenshots
   of the running app in this repo** — the diagrams in the article are drawn from `swift test`
   output, not from a device capture.
+- **`ContrastGateDemoView.swift` has never been type-checked.** It sits behind
+  `#if canImport(SwiftUI)`, and the Linux toolchain used above has no SwiftUI, so `swift build`
+  compiled none of it. It parses cleanly (`swiftc -parse`) and that is the entire claim. The audit
+  maths underneath it is fully covered; the view is not.
 - `Demo.xcodeproj/project.pbxproj` was hand-authored and machine-checked instead: braces and parens
   balanced (32/32, 24/24), all 22 object ids referenced are defined, zero dangling references, the
   asset catalog JSON parses, and `Demo.xcscheme` is well-formed XML. That is a structural check, not
   a build. **If you clone this and the project does not open, that is the gap — open an issue and I
   will fix it.**
-- The library itself carries no `iOS 27`-only API and no SwiftUI dependency in its maths, so every
-  number above is reproducible with `swift test` on any platform with a Swift 6 toolchain,
-  independent of Xcode.
+- The library carries no `iOS 27`-only API and no SwiftUI dependency in its maths, so every number
+  above is reproducible with `swift test` on any platform with a Swift 6 toolchain, independent of
+  Xcode. That is the part you should trust; the UI layer is the part you should check.
 
 ---
 
